@@ -1,1 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key Giver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+            background-color: #111;
+            color: #fff;
+        }
+        button {
+            background-color: #7b5cff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #9a7cff;
+        }
+        #displayKey {
+            margin-top: 30px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffd700;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <h1>Key Giver</h1>
+    <p>Please enter your UserId to get a key:</p>
+    <input type="text" id="userIdInput" placeholder="Enter UserId" />
+    <br>
+    <button id="getKey">Get Key</button>
+    <p id="displayKey"></p>
 
+    <script>
+        // === CONFIG ===
+        const RAW_URL = "https://raw.githubusercontent.com/KielKeyHandler/Keysystem/refs/heads/main/keys.txt";
+        const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1434932220258291742/o6KZXO3PBAj9bJZHzs5RtpoVBSNZnBI2S1xpdgUHV2kiZ4zfylLBBeVSBaQdjZO1YBxq";
+
+        document.getElementById("getKey").addEventListener("click", async function() {
+            const userId = document.getElementById("userIdInput").value.trim();
+            if (!userId) {
+                alert("Please enter your UserId!");
+                return;
+            }
+
+            try {
+                // Fetch keys from GitHub
+                const response = await fetch(RAW_URL);
+                const text = await response.text();
+                const keys = text.split(/\r?\n/).filter(k => k); // remove empty lines
+
+                if (keys.length === 0) {
+                    document.getElementById("displayKey").innerText = "No keys available!";
+                    return;
+                }
+
+                // Pick a random key
+                const pickedKey = keys[Math.floor(Math.random() * keys.length)];
+
+                // Display key to user
+                document.getElementById("displayKey").innerText = pickedKey;
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(pickedKey).then(() => {
+                    console.log("Key copied to clipboard!");
+                });
+
+                // Send to Discord webhook
+                fetch(DISCORD_WEBHOOK, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: "Key Giver",
+                        content: `UserId: ${userId}\nKey: ${pickedKey}`
+                    })
+                });
+
+            } catch (err) {
+                document.getElementById("displayKey").innerText = "Error fetching key!";
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>
